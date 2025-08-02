@@ -3,6 +3,9 @@
 (define-constant err-not-found (err u101))
 (define-constant err-invalid-status (err u102))
 (define-constant err-unauthorized (err u103))
+(define-constant err-dispute-exists (err u104))
+(define-constant err-dispute-not-found (err u105))
+(define-constant err-dispute-resolved (err u106))
 
 (define-data-var min-reliability-score uint u70)
 (define-data-var token-reward-amount uint u100)
@@ -39,6 +42,16 @@
   { rating: uint,
     reviewer: principal,
     timestamp: uint }
+)
+
+(define-map Disputes
+  { shipment-id: uint }
+  { initiator: principal,
+    reason: (string-ascii 100),
+    status: (string-ascii 20),
+    created-at: uint,
+    resolved-at: (optional uint),
+    resolution: (optional (string-ascii 50)) }
 )
 
 (define-data-var next-shipment-id uint u1)
@@ -97,7 +110,7 @@
 (define-public (submit-review (shipment-id uint) (rating uint))
   (let ((shipment (unwrap! (map-get? Shipments { shipment-id: shipment-id }) err-not-found)))
     (asserts! (is-eq (get status shipment) "delivered") err-invalid-status)
-    (asserts! (<= rating u100) (err u104))
+    (asserts! (<= rating u100) (err u107))
     (ok (map-set Reviews
       { shipment-id: shipment-id }
       { rating: rating,
@@ -105,6 +118,34 @@
 
 
         timestamp: burn-block-height }))))
+
+(define-public (raise-dispute (shipment-id uint) (reason (string-ascii 100)))
+  (let ((shipment (unwrap! (map-get? Shipments { shipment-id: shipment-id }) err-not-found))
+        (existing-dispute (map-get? Disputes { shipment-id: shipment-id })))
+    (asserts! (is-none existing-dispute) err-dispute-exists)
+    (asserts! (or (is-eq tx-sender (get sender shipment))
+                  (is-eq tx-sender (get receiver shipment))) err-unauthorized)
+    (ok (map-set Disputes
+      { shipment-id: shipment-id }
+      { initiator: tx-sender,
+        reason: reason,
+        status: "open",
+        created-at: burn-block-height,
+        resolved-at: none,
+        resolution: none }))))
+
+(define-public (resolve-dispute (shipment-id uint) (resolution (string-ascii 50)))
+  (let ((dispute (unwrap! (map-get? Disputes { shipment-id: shipment-id }) err-dispute-not-found)))
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (is-eq (get status dispute) "open") err-dispute-resolved)
+    (ok (map-set Disputes
+      { shipment-id: shipment-id }
+      (merge dispute { status: "resolved",
+                      resolved-at: (some burn-block-height),
+                      resolution: (some resolution) })))))
+
+(define-read-only (get-dispute (shipment-id uint))
+  (map-get? Disputes { shipment-id: shipment-id }))
 (define-read-only (get-driver-stats (driver principal))
   (map-get? Drivers { driver: driver }))
 
