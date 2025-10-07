@@ -13,12 +13,14 @@
 (define-data-var min-reliability-score uint u70)
 (define-data-var token-reward-amount uint u100)
 
-(define-map Drivers 
+(define-map Drivers
   { driver: principal }
   { reliability-score: uint,
     total-deliveries: uint,
     active: bool,
-    tokens-earned: uint }
+    tokens-earned: uint,
+    total-reviews: uint,
+    sum-ratings: uint }
 )
 
 (define-map Shipments
@@ -73,7 +75,9 @@
   (let ((driver-data { reliability-score: u100,
                       total-deliveries: u0,
                       active: true,
-                      tokens-earned: u0 }))
+                      tokens-earned: u0,
+                      total-reviews: u0,
+                      sum-ratings: u0 }))
     (ok (map-set Drivers { driver: tx-sender } driver-data))))
 
 (define-public (create-shipment (receiver principal) (payment-amount uint) (route-hash (string-ascii 64)))
@@ -120,16 +124,24 @@
                      tokens-earned: (+ (get tokens-earned driver) (var-get token-reward-amount)) }))
     (ok true)))
 (define-public (submit-review (shipment-id uint) (rating uint))
-  (let ((shipment (unwrap! (map-get? Shipments { shipment-id: shipment-id }) err-not-found)))
+  (let ((shipment (unwrap! (map-get? Shipments { shipment-id: shipment-id }) err-not-found))
+        (driver-principal (unwrap! (get driver shipment) err-unauthorized))
+        (driver-data (unwrap! (map-get? Drivers { driver: driver-principal }) err-not-found))
+        (new-total-reviews (+ (get total-reviews driver-data) u1))
+        (new-sum-ratings (+ (get sum-ratings driver-data) rating))
+        (new-reliability-score (/ new-sum-ratings new-total-reviews)))
     (asserts! (is-eq (get status shipment) "delivered") err-invalid-status)
     (asserts! (<= rating u100) (err u110))
-    (ok (map-set Reviews
+    (map-set Reviews
       { shipment-id: shipment-id }
       { rating: rating,
         reviewer: tx-sender,
-
-
-        timestamp: burn-block-height }))))
+        timestamp: burn-block-height })
+    (ok (map-set Drivers
+      { driver: driver-principal }
+      (merge driver-data { total-reviews: new-total-reviews,
+                           sum-ratings: new-sum-ratings,
+                           reliability-score: new-reliability-score })))))
 
 (define-public (raise-dispute (shipment-id uint) (reason (string-ascii 100)))
   (let ((shipment (unwrap! (map-get? Shipments { shipment-id: shipment-id }) err-not-found))

@@ -1,5 +1,3 @@
-# 🚚 Decentralized Microport Logistics Protocol
-
 A Web3-based logistics coordination platform connecting remote areas with community drivers and local transport solutions.
 
 ## 🎯 Features
@@ -75,3 +73,10 @@ Key additions:
 
 The implementation focuses on essential features while maintaining clean, minimal code structure. Ready for initial testing and feedback.
 
+
+## 🔄 Recent Enhancements
+
+### Dynamic Driver Reliability Scoring
+- **Automatic Updates**: Driver reliability scores now update automatically based on review ratings upon submission.
+- **Aggregated Ratings**: Scores calculated as the average of all received ratings, ensuring fair representation of performance.
+- **Enhanced Trust**: Improves platform transparency by reflecting real-time driver reputation from user feedback.
