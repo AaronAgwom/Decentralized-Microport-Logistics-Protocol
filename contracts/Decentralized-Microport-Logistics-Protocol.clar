@@ -68,6 +68,12 @@
     released-at: (optional uint) }
 )
 
+(define-map DriverStakes
+  { driver: principal }
+  { staked-amount: uint,
+    staked-at: uint }
+)
+
 (define-data-var next-shipment-id uint u1)
 (define-data-var next-route-id uint u1)
 
@@ -221,3 +227,33 @@
 
 (define-read-only (get-route-nft (route-id uint))
   (map-get? RouteNFTs { route-id: route-id }))
+
+(define-public (stake-tokens (amount uint))
+  (let ((existing-stake (map-get? DriverStakes { driver: tx-sender }))
+        (driver-data (unwrap! (map-get? Drivers { driver: tx-sender }) err-unauthorized)))
+    (asserts! (>= (stx-get-balance tx-sender) amount) err-insufficient-funds)
+    (try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
+    (if (is-some existing-stake)
+        (let ((current-stake (unwrap-panic existing-stake)))
+          (ok (map-set DriverStakes
+            { driver: tx-sender }
+            { staked-amount: (+ (get staked-amount current-stake) amount),
+              staked-at: burn-block-height })))
+        (ok (map-set DriverStakes
+          { driver: tx-sender }
+          { staked-amount: amount,
+            staked-at: burn-block-height })))))
+
+(define-public (unstake-tokens (amount uint))
+  (let ((stake (unwrap! (map-get? DriverStakes { driver: tx-sender }) err-not-found)))
+    (asserts! (>= (get staked-amount stake) amount) err-insufficient-funds)
+    (as-contract (try! (stx-transfer? amount tx-sender tx-sender)))
+    (if (is-eq (- (get staked-amount stake) amount) u0)
+        (ok (map-delete DriverStakes { driver: tx-sender }))
+        (ok (map-set DriverStakes
+          { driver: tx-sender }
+          { staked-amount: (- (get staked-amount stake) amount),
+            staked-at: (get staked-at stake) })))))
+
+(define-read-only (get-driver-stake (driver principal))
+  (map-get? DriverStakes { driver: driver }))

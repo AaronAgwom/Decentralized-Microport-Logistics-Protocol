@@ -80,3 +80,9 @@ The implementation focuses on essential features while maintaining clean, minima
 - **Automatic Updates**: Driver reliability scores now update automatically based on review ratings upon submission.
 - **Aggregated Ratings**: Scores calculated as the average of all received ratings, ensuring fair representation of performance.
 - **Enhanced Trust**: Improves platform transparency by reflecting real-time driver reputation from user feedback.
+
+### Driver Staking Mechanism
+- **Secure Commitments**: Drivers can now stake STX tokens to demonstrate commitment and build trust within the network.
+- **Flexible Management**: Full control over staking with easy deposit and withdrawal capabilities.
+- **Reputation Boost**: Staked amounts enhance driver visibility and credibility in the logistics ecosystem.
+- **Economic Incentives**: Encourages responsible behavior through financial skin in the game.
