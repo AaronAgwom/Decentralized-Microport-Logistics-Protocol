@@ -257,3 +257,9 @@
 
 (define-read-only (get-driver-stake (driver principal))
   (map-get? DriverStakes { driver: driver }))
+(define-public (transfer-route-nft (route-id uint) (new-owner principal))
+  (let ((route-nft (unwrap! (map-get? RouteNFTs { route-id: route-id }) err-not-found)))
+    (asserts! (is-eq tx-sender (get owner route-nft)) err-unauthorized)
+    (ok (map-set RouteNFTs
+      { route-id: route-id }
+      (merge route-nft { owner: new-owner })))))

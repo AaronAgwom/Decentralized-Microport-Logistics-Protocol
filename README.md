@@ -18,6 +18,7 @@ A Web3-based logistics coordination platform connecting remote areas with commun
 ### For Users
 - `create-shipment`: Create a new shipment request
 - `submit-review`: Rate completed deliveries
+- `transfer-route-nft`: Transfer ownership of a route NFT to another user
 
 ### Read-Only Functions
 - `get-driver-stats`: View driver statistics
@@ -86,3 +87,9 @@ The implementation focuses on essential features while maintaining clean, minima
 - **Flexible Management**: Full control over staking with easy deposit and withdrawal capabilities.
 - **Reputation Boost**: Staked amounts enhance driver visibility and credibility in the logistics ecosystem.
 - **Economic Incentives**: Encourages responsible behavior through financial skin in the game.
+
+### Route NFT Transfer Functionality
+- **Seamless Ownership Changes**: Users can now transfer route NFTs to other principals with ease.
+- **Enhanced Asset Liquidity**: Enables trading and delegation of routes, creating new economic opportunities.
+- **Secure and Authorized**: Only current owners can initiate transfers, ensuring asset security.
+- **Platform Engagement**: Boosts user interaction by making route NFTs more versatile and valuable.
